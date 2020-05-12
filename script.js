@@ -67,6 +67,50 @@ function singleVidReq(vidReqInfo, isPrepend){
 	});
 }
 
+function checkValidity(reqVidFormData){
+	let name = reqVidFormData.get('author_name'),
+		email = reqVidFormData.get('author_email'),
+		topic = reqVidFormData.get('topic_title'),
+		details = reqVidFormData.get('topic_details'),
+		result = reqVidFormData.get('expected_result');
+
+	if (!name) {
+		document.querySelector('[name=author_name]').classList.add('is-invalid');
+	}
+
+	let emailPattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+
+	if (!email || !emailPattern.test(email)) {
+		document.querySelector('[name=author_email]').classList.add('is-invalid');
+	}
+
+	if (!topic || topic.length > 25) {
+		document.querySelector('[name=topic_title]').classList.add('is-invalid');
+	}
+
+	if (!details) {
+		document.querySelector('[name=topic_details]').classList.add('is-invalid');
+	}
+
+	if (!result) {
+		document.querySelector('[name=expected_result]').classList.add('is-invalid');
+	}
+
+	let allInavlidInputs = document.getElementById('req_vid_form').querySelectorAll('.is-invalid');
+
+	if (allInavlidInputs.length) {
+		allInavlidInputs.forEach((invalidInput) => {
+			invalidInput.addEventListener('input', function(){
+				this.classList.remove('is-invalid');
+			});
+		});
+
+		return false;
+	} else {
+		return true
+	}
+}
+
 function loadAllVidRequests(sortBy, searchTerm){
 	fetch(`http://localhost:7777/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}`, {
 		method: 'GET'
@@ -127,6 +171,12 @@ document.addEventListener('DOMContentLoaded', function(){
 		event.preventDefault();
 
 		let reqVidFormData = new FormData(reqVidForm);
+
+		let isValid = checkValidity(reqVidFormData);
+
+		if (!isValid) {
+			return;
+		}
 
 		fetch('http://localhost:7777/video-request', {
 			method: 'POST',
