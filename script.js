@@ -1,5 +1,9 @@
 let vidRequets = document.getElementById('list_of_requests');
 
+let sortBy = 'sort_by_new_first';
+
+let searchTerm = '';
+
 function singleVidReq(vidReqInfo, isPrepend){
 	let vidReqTemplate = document.createElement('div');
 	vidReqTemplate.innerHTML = `
@@ -63,8 +67,8 @@ function singleVidReq(vidReqInfo, isPrepend){
 	});
 }
 
-function loadAllVidRequests(sortBy='new_first'){
-	fetch(`http://localhost:7777/video-request?sortBy=${sortBy}`, {
+function loadAllVidRequests(sortBy, searchTerm){
+	fetch(`http://localhost:7777/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}`, {
 		method: 'GET'
 	})
 	.then(blob => blob.json())
@@ -76,22 +80,48 @@ function loadAllVidRequests(sortBy='new_first'){
 	});
 }
 
+function debounce(fn, time){
+	let timeout;
+
+	return function(...args){
+		clearTimeout(timeout);
+		timeout = setTimeout(() => fn.apply(this, args), time);
+	};
+}
+
 document.addEventListener('DOMContentLoaded', function(){
+	const reqVidForm = document.getElementById('req_vid_form');
+
 	let sortByElms = document.querySelectorAll('[id*=sort_by_]');
 
-	loadAllVidRequests();
+	let searchBox = document.getElementById('search_box');
+
+	loadAllVidRequests(sortBy, searchTerm);
+
+	searchBox.addEventListener('input',
+		debounce((e) => {
+			searchTerm = e.target.value;
+
+			loadAllVidRequests(sortBy, searchTerm);
+		}, 300)
+	);
 
 	sortByElms.forEach((elm) => {
 		elm.addEventListener('click', function(e){
 			e.preventDefault();
 
-			let sortBy = this.querySelector('input');
+			sortBy = this.querySelector('input').value;
 
-			loadAllVidRequests(sortBy.value);
+			loadAllVidRequests(sortBy, searchTerm);
+
+			this.classList.add('active');
+
+			if(sortBy == 'sort_by_top_voted')
+				document.getElementById('sort_by_new_first').classList.remove('active');
+			else
+				document.getElementById('sort_by_top_voted').classList.remove('active');
 		});
 	});
-
-	const reqVidForm = document.getElementById('req_vid_form');
 
 	reqVidForm.addEventListener('submit', (event) => {
 		event.preventDefault();
